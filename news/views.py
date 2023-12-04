@@ -4,9 +4,13 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from tqdm import tqdm
+from wordcloud import WordCloud ## 확인해보니 Python 3.12.0 이상에서는 작동 불능
+import matplotlib.pyplot as plt
+import base64
+from mecab import MeCab ## python-mecab-ko => 워드 클라우드를 위한 형태소 분석기
+from io import BytesIO ## 이미지 바이너리 단위로 변환
 
 # Create your views here.
-# 삽입 정렬 + 뉴스 왼쪽에 언론사 출력 + 워드클라우드는 아직 미구현. 진행중.
 
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/98.0.4758.102"}
 
@@ -39,8 +43,8 @@ def articles_crawler(url):
 def news_scraper(search, press_codes):
     news_titles = []
     news_url = []
-    news_contents = []
-    news_dates = []
+    news_contents = []  
+    news_dates = [] 
 
     for press_code in press_codes:
         url = makeUrl(search, press_code)
@@ -94,12 +98,39 @@ def news_scraper(search, press_codes):
         news_contents.append(article_content)
         news_dates.append(news_date)
 
+    new_data = list(zip(news_dates, news_titles, final_urls, news_contents))
 
     return {
         "titles": news_titles,
         "urls": final_urls,
         "dates": news_dates,
+        "new_data": new_data,
     }
+
+def remove_particles(text):
+    mecab = MeCab()
+    words = mecab.nouns(text)
+    return ' '.join(words)
+
+def generate_wordcloud(data):
+    font_path = "./fonts/NanumGothic.ttf"  # Update the path
+
+    all_titles = [remove_particles(row[1]) for row in data]
+    all_contents = [remove_particles(row[3]) for row in data]
+    all_combined_text = ' '.join(all_titles + all_contents)
+
+    wordcloud = WordCloud(
+        width=800,
+        height=400,
+        background_color='white',
+        font_path=font_path,
+    ).generate(all_combined_text)
+
+    image_stream = BytesIO()
+    wordcloud.to_image().save(image_stream, format='PNG')
+    encoded_image = base64.b64encode(image_stream.getvalue()).decode('utf-8')
+
+    return f"data:image/png;base64,{encoded_image}"
 
 def grab(request):
     queries = {}
@@ -111,21 +142,22 @@ def grab(request):
     search = queries.get('query1', '')
     press_codes = [queries.get(f'query{i}', '') for i in range(2, i)]
 
-    
     if not search or not any(press_codes):
         return HttpResponse("Invalid input. Please provide a search query and at least one press code.")
 
-    
     news_data = news_scraper(search, press_codes)
 
-    zipped_news = zip(news_data["titles"], news_data["urls"], news_data["dates"])
+
+    ##### 여기에 삽입 정렬 알고리즘 삽입 필요!!!! #####
+
+
+    wordcloud_image = generate_wordcloud(news_data["new_data"])
 
     context = {
         "search": search,
         "selected_newspapers": press_codes,
-        "zipped_news": zipped_news,
+        "zipped_news": zip(news_data["titles"], news_data["urls"], news_data["dates"]),
+        "wordcloud_image": wordcloud_image,
     }
-
-    print(context)
 
     return render(request, 'news/index.html', context)

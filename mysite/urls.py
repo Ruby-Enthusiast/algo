@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.shortcuts import redirect
 
 urlpatterns = [
+    path('', lambda request: redirect('/calcapp/')),
     path("calcapp/", include("calcapp.urls", namespace="calcapp")),
     path("news/", include("news.urls", namespace="news")),
     path("admin/", admin.site.urls),

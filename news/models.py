@@ -9,4 +9,6 @@ class SearchHistory(models.Model):
     
     @classmethod
     def get_random_quiz_question(cls):
-        return cls.objects.order_by('?').first()
+        random_question = cls.objects.order_by('?').first()
+        print(f"Selected question: {random_question}")
+        return random_question

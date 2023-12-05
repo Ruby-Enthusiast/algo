@@ -126,6 +126,7 @@ def remove_particles(text):
     return ' '.join(words)
 
 def generate_wordcloud(search, data):
+    
     def remove_search_query(text):
         words = text.split()
         return ' '.join([word.replace(search, '') if word == search else word for word in words])

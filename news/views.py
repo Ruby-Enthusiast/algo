@@ -1,3 +1,5 @@
+### 전체적으로 Python 3.11.5, MacBook Pro 환경에서 빌드.
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from bs4 import BeautifulSoup

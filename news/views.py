@@ -115,14 +115,14 @@ def remove_particles(text):
     return ' '.join(words)
 
 def generate_wordcloud(data):
-    font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
+    # font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
 
     # Linux 환경이라면, 일단 나눔고딕 폰트를 설치하고,  
     # font_path = "(폰트 경로)/NanumGothic.ttf" 로 변경
     # 보통은 폰트 경로가 /usr/share/fonts/
 
     # Windows 환경이라면,
-    # font_path = "./font/NanumGothic.ttf"
+    font_path = "./font/NanumGothic.ttf"
 
     all_titles = [remove_particles(row[1]) for row in data]
     all_contents = [remove_particles(row[3]) for row in data]
@@ -157,15 +157,27 @@ def grab(request):
     news_data = news_scraper(search, press_codes)
 
 
-    ##### 여기에 news_data 기반 삽입 정렬 알고리즘 필요!!!! #####
+    # news_data 기반으로 삽입 정렬 알고리즘 추가
+    sorted_data = list(zip(news_data["dates"], news_data["titles"], news_data["urls"], news_data["new_data"]))
+    for i in range(1, len(sorted_data)):
+        key_data, key_title, key_url, key_content = sorted_data[i]
 
+        j = i - 1
+        while j >= 0 and key_data > sorted_data[j][0]:
+            sorted_data[j + 1] = sorted_data[j]
+            j -= 1
+
+        sorted_data[j + 1] = (key_data, key_title, key_url, key_content)
+
+    # 정렬된 데이터를 따로 저장
+    sorted_dates, sorted_titles, sorted_urls, sorted_new_data = zip(*sorted_data)
 
     wordcloud_image = generate_wordcloud(news_data["new_data"])
 
     context = {
         "search": search,
         "selected_newspapers": press_codes,
-        "zipped_news": zip(news_data["titles"], news_data["urls"], news_data["dates"]),
+        "zipped_news": zip(sorted_titles, sorted_urls, sorted_dates),
         "wordcloud_image": wordcloud_image,
     }
 

@@ -4,11 +4,11 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from tqdm import tqdm
-from wordcloud import WordCloud ## 확인해보니 Python 3.12.0 이상에서는 작동 불능
+from wordcloud import WordCloud ## 확인해보니 Python 3.12.0 이상에서는 작동 불능.
 import matplotlib.pyplot as plt
 import base64
-from mecab import MeCab ## python-mecab-ko => 워드 클라우드를 위한 형태소 분석기
-from io import BytesIO ## 이미지 바이너리 단위로 변환
+from mecab import MeCab ## python-mecab-ko 라이브러리 설치 필요!! => 워드 클라우드를 위한 형태소 분석기.
+from io import BytesIO ## 이미지를 바이너리 단위로 변환용, db 설정 안하고도 이미지 표시할 수 있게 하는 용도.
 
 # Create your views here.
 
@@ -113,7 +113,14 @@ def remove_particles(text):
     return ' '.join(words)
 
 def generate_wordcloud(data):
-    font_path = "./fonts/NanumGothic.ttf"  # Update the path
+    font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
+
+    # Linux 환경이라면, 일단 나눔고딕 폰트를 설치하고,  
+    # font_path = "(폰트 경로)/NanumGothic.ttf" 로 변경
+    # 보통은 폰트 경로가 /usr/share/fonts/
+
+    # Windows 환경이라면,
+    # font_path = "./font/NanumGothic.ttf"
 
     all_titles = [remove_particles(row[1]) for row in data]
     all_contents = [remove_particles(row[3]) for row in data]
@@ -148,7 +155,7 @@ def grab(request):
     news_data = news_scraper(search, press_codes)
 
 
-    ##### 여기에 삽입 정렬 알고리즘 삽입 필요!!!! #####
+    ##### 여기에 news_data 기반 삽입 정렬 알고리즘 필요!!!! #####
 
 
     wordcloud_image = generate_wordcloud(news_data["new_data"])

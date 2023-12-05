@@ -2,6 +2,7 @@
 
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.core.files.base import ContentFile
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -11,10 +12,20 @@ import matplotlib.pyplot as plt
 import base64
 from mecab import MeCab ## python-mecab-ko 라이브러리 설치 필요!! => 워드 클라우드를 위한 형태소 분석기.
 from io import BytesIO ## 이미지를 바이너리 단위로 변환용, db 설정 안하고도 이미지 표시할 수 있게 하는 용도.
+from .models import SearchHistory
 
 # Create your views here.
 
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/98.0.4758.102"}
+
+# font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
+
+    # Linux 환경이라면, 일단 나눔고딕 폰트를 설치하고,  
+    # font_path = "(폰트 경로)/NanumGothic.ttf" 로 변경
+    # 보통은 폰트 경로가 /usr/share/fonts/
+
+    # Windows 환경이라면,
+fontpath = "./font/NanumGothic.ttf"
 
 def makePgNum(num):
     if num == 1:
@@ -114,32 +125,28 @@ def remove_particles(text):
     words = mecab.nouns(text)
     return ' '.join(words)
 
-def generate_wordcloud(data):
-    # font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
+def generate_wordcloud(search, data):
+    def remove_search_query(text):
+        words = text.split()
+        return ' '.join([word.replace(search, '') if word == search else word for word in words])
 
-    # Linux 환경이라면, 일단 나눔고딕 폰트를 설치하고,  
-    # font_path = "(폰트 경로)/NanumGothic.ttf" 로 변경
-    # 보통은 폰트 경로가 /usr/share/fonts/
-
-    # Windows 환경이라면,
-    font_path = "./font/NanumGothic.ttf"
-
-    all_titles = [remove_particles(row[1]) for row in data]
-    all_contents = [remove_particles(row[3]) for row in data]
+    # Remove the search query from titles and contents
+    all_titles = [remove_search_query(remove_particles(row[1])) for row in data]
+    all_contents = [remove_search_query(remove_particles(row[3])) for row in data]
     all_combined_text = ' '.join(all_titles + all_contents)
 
     wordcloud = WordCloud(
         width=800,
         height=400,
         background_color='white',
-        font_path=font_path,
+        font_path=fontpath,
     ).generate(all_combined_text)
 
+    # Save the wordcloud to image stream
     image_stream = BytesIO()
     wordcloud.to_image().save(image_stream, format='PNG')
-    encoded_image = base64.b64encode(image_stream.getvalue()).decode('utf-8')
-
-    return f"data:image/png;base64,{encoded_image}"
+    
+    return image_stream.getvalue()
 
 def grab(request):
     queries = {}
@@ -153,9 +160,8 @@ def grab(request):
 
     if not search or not any(press_codes):
         return HttpResponse("Invalid input. Please provide a search query and at least one press code.")
-
+    
     news_data = news_scraper(search, press_codes)
-
 
     # news_data 기반으로 삽입 정렬 알고리즘 추가
     sorted_data = list(zip(news_data["dates"], news_data["titles"], news_data["urls"], news_data["new_data"]))
@@ -172,13 +178,25 @@ def grab(request):
     # 정렬된 데이터를 따로 저장
     sorted_dates, sorted_titles, sorted_urls, sorted_new_data = zip(*sorted_data)
 
-    wordcloud_image = generate_wordcloud(news_data["new_data"])
+    wordcloud_image = generate_wordcloud(search, news_data["new_data"])
+
+    if not SearchHistory.objects.filter(search_query=search).exists():
+        # If it doesn't exist, create a new entry in the database
+        search_history = SearchHistory(search_query=search)
+
+        # Save the wordcloud in the database
+        search_history.wordcloud_image.save(f'{search}_wordcloud.png', ContentFile(wordcloud_image))
+
+        search_history.save()
+
+    # Convert the image to base64 for rendering in HTML
+    encoded_image = base64.b64encode(wordcloud_image).decode('utf-8')
 
     context = {
         "search": search,
         "selected_newspapers": press_codes,
         "zipped_news": zip(sorted_titles, sorted_urls, sorted_dates),
-        "wordcloud_image": wordcloud_image,
+        "wordcloud_image": f"data:image/png;base64,{encoded_image}",
     }
 
     return render(request, 'news/index.html', context)

@@ -1,0 +1,103 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스1</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f0f5f5; /* 푸른색 계열의 배경색 */
+        }
+        .navbar {
+            background-color: #007bff; /* 네비게이션 바의 배경색 */
+        }
+        .navbar-brand {
+            color: #ffffff;
+            font-size: 1.5em;
+        }
+        .navbar-toggler-icon {
+            background-color: #ffffff;
+        }
+        .card {
+            border: 2px solid #007bff; /* 카드의 테두리 색상 */
+        }
+        .lead {
+            font-size: 1.2em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-check-label {
+            font-weight: bold;
+            color: #007bff; /* 체크박스 레이블의 색상 */
+        }
+        .btn-primary {
+            background-color: #007bff; /* 버튼의 배경색 */
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .list-group-item {
+            background-color: #007bff; /* 리스트 그룹 아이템의 배경색 */
+            color: #ffffff;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand" href="#">뉴스 퀴즈</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Back to Crawler</a>
+        </li>
+      </ul>
+    </div>
+</nav>
+
+<div class="container mt-3">
+    <h2>Guess the Search!</h2>
+    <br>
+    {% if result_message %}
+        {{ result_message }}
+    {% endif %}
+    {% if result_message|slice:":1" == '틀' and quiz_question.search_query %}
+    <p>이전 문제의 정답은 {{ quiz_question.search_query }}입니다.</p>
+    {% endif %}
+    <br>
+    <img src="{{ quiz_question.wordcloud_image.url }}" alt="Word Cloud">
+    <br><br>
+    <form id="quizForm" method="post" action="{% url 'quiz:quiz_view' %}">
+        {% csrf_token %}
+        <label for="user_guess">Your Guess:</label>
+        <input type="text" name="user_guess">
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<script>
+    // Reload the page after submission
+    document.addEventListener('DOMContentLoaded', function () {
+        var quizForm = document.getElementById('quizForm');
+        quizForm.addEventListener('submit', function () {
+            location.reload();
+        });
+    });
+</script>
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE5nP1x6Xq6AYK8ZTRByL8uPf/CHG7Q1jKGK/K1HRUERHsu1wmKjp1x" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+</body>
+</html>

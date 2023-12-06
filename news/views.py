@@ -18,14 +18,14 @@ from .models import SearchHistory
 
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/98.0.4758.102"}
 
-# font_path = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
+fontpath = "~/Library/Fonts/NanumGothic.ttf"  # Mac 환경용
 
     # Linux 환경이라면, 일단 나눔고딕 폰트를 설치하고,  
     # font_path = "(폰트 경로)/NanumGothic.ttf" 로 변경
     # 보통은 폰트 경로가 /usr/share/fonts/
 
     # Windows 환경이라면,
-fontpath = "./font/NanumGothic.ttf"
+# fontpath = "./font/NanumGothic.ttf"
 
 def makePgNum(num):
     if num == 1:

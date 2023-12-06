@@ -164,6 +164,9 @@ def grab(request):
     
     news_data = news_scraper(search, press_codes)
 
+    if news_data['titles'] == []:
+        return HttpResponse("에러! 검색 결과가 없습니다.")
+
     # news_data 기반으로 삽입 정렬 알고리즘 추가
     sorted_data = list(zip(news_data["dates"], news_data["titles"], news_data["urls"], news_data["new_data"]))
     for i in range(1, len(sorted_data)):

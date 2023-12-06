@@ -160,7 +160,7 @@ def grab(request):
     press_codes = [queries.get(f'query{i}', '') for i in range(2, i)]
 
     if not search or not any(press_codes):
-        return HttpResponse("Invalid input. Please provide a search query and at least one press code.")
+        return HttpResponse("잘못된 입력입니다. 검색어나 최소 하나의 언론사를 선택해주세요.")
     
     news_data = news_scraper(search, press_codes)
 
